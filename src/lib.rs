@@ -36,7 +36,7 @@ fn crob_yield(crob: RawCrob, data: usize) -> (RawCrob, usize) {
             "pop rbx",
             inout("rdi") crob.sp => res_crob,
             inout("rsi") data => res_data,
-            out("r12") _, out("r13") _, out("r14") _, out("r15") _,
+            lateout("r12") _, lateout("r13") _, lateout("r14") _, lateout("r15") _,
             clobber_abi("sysv64")
         );
     };
@@ -72,10 +72,10 @@ fn crob_yield(crob: RawCrob, data: usize) -> (RawCrob, usize) {
             cr = in(reg) crob.sp,
             out("a0") res_crob,
             in("t0") crob.ra,
-            out("ra") res_ra,
-            inout("a2") data => res_data,
-            out("s2") _, out("s3") _, out("s4") _, out("s5") _, out("s6") _, out("s7") _, out("s8") _, out("s9") _, out("s10") _, out("s11") _,
-            out("fs0") _, out("fs1") _, out("fs2") _, out("fs3") _, out("fs4") _, out("fs5") _, out("fs6") _, out("fs7") _, out("fs8") _, out("fs9") _, out("fs10") _, out("fs11") _,
+            lateout("ra") res_ra,
+            inlateout("a2") data => res_data,
+            lateout("s2") _, lateout("s3") _, lateout("s4") _, lateout("s5") _, lateout("s6") _, lateout("s7") _, lateout("s8") _, lateout("s9") _, lateout("s10") _, lateout("s11") _,
+            lateout("fs0") _, lateout("fs1") _, lateout("fs2") _, lateout("fs3") _, lateout("fs4") _, lateout("fs5") _, lateout("fs6") _, lateout("fs7") _, lateout("fs8") _, lateout("fs9") _, lateout("fs10") _, lateout("fs11") _,
             clobber_abi("C")
         );
     };
