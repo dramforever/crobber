@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{arch::asm, marker::PhantomData};
 
 #[cfg(all(unix, target_arch = "x86_64"))]
 #[derive(Clone, Copy)]
@@ -18,17 +18,11 @@ pub struct RawCrob<'a> {
 }
 
 #[cfg(all(unix, target_arch = "x86_64"))]
-const STACK_ALIGN: usize = 16;
-#[cfg(all(unix, target_arch = "riscv64"))]
-const STACK_ALIGN: usize = 16;
-
-#[cfg(all(unix, target_arch = "x86_64"))]
 fn crob_yield(crob: RawCrob, data: usize) -> (RawCrob, usize) {
-    use std::arch::asm;
-
     let res_crob: *const usize;
     let res_data;
 
+    #[rustfmt::skip]
     unsafe {
         asm!(
             "push rbx",
@@ -42,10 +36,7 @@ fn crob_yield(crob: RawCrob, data: usize) -> (RawCrob, usize) {
             "pop rbx",
             inout("rdi") crob.sp => res_crob,
             inout("rsi") data => res_data,
-            out("r12") _,
-            out("r13") _,
-            out("r14") _,
-            out("r15") _,
+            out("r12") _, out("r13") _, out("r14") _, out("r15") _,
             clobber_abi("sysv64")
         );
     };
@@ -61,13 +52,12 @@ fn crob_yield(crob: RawCrob, data: usize) -> (RawCrob, usize) {
 
 #[cfg(all(unix, target_arch = "riscv64"))]
 fn crob_yield(crob: RawCrob, data: usize) -> (RawCrob, usize) {
-    use std::arch::asm;
-
     let res_crob: *const usize;
     let res_ra: usize;
     let res_data;
 
     #[cfg(all(unix, target_arch = "riscv64"))]
+    #[rustfmt::skip]
     unsafe {
         asm!(
             "addi sp, sp, -16",
@@ -84,28 +74,8 @@ fn crob_yield(crob: RawCrob, data: usize) -> (RawCrob, usize) {
             in("t0") crob.ra,
             out("ra") res_ra,
             inout("a2") data => res_data,
-            out("s2") _,
-            out("s3") _,
-            out("s4") _,
-            out("s5") _,
-            out("s6") _,
-            out("s7") _,
-            out("s8") _,
-            out("s9") _,
-            out("s10") _,
-            out("s11") _,
-            out("fs0") _,
-            out("fs1") _,
-            out("fs2") _,
-            out("fs3") _,
-            out("fs4") _,
-            out("fs5") _,
-            out("fs6") _,
-            out("fs7") _,
-            out("fs8") _,
-            out("fs9") _,
-            out("fs10") _,
-            out("fs11") _,
+            out("s2") _, out("s3") _, out("s4") _, out("s5") _, out("s6") _, out("s7") _, out("s8") _, out("s9") _, out("s10") _, out("s11") _,
+            out("fs0") _, out("fs1") _, out("fs2") _, out("fs3") _, out("fs4") _, out("fs5") _, out("fs6") _, out("fs7") _, out("fs8") _, out("fs9") _, out("fs10") _, out("fs11") _,
             clobber_abi("C")
         );
     };
@@ -134,6 +104,7 @@ std::arch::global_asm!(
 impl<'a> RawCrob<'a> {
     #[cfg(all(unix, target_arch = "x86_64"))]
     pub fn new(stack: &mut [usize], start: extern "C" fn(RawCrob, usize) -> !) -> Self {
+        const STACK_ALIGN: usize = 16;
         assert!(stack.len() > 8, "Stack too small");
 
         let mut ptr = stack.as_mut_ptr_range().end;
@@ -152,6 +123,8 @@ impl<'a> RawCrob<'a> {
 
     #[cfg(all(unix, target_arch = "riscv64"))]
     pub fn new(stack: &mut [usize], start: extern "C" fn(RawCrob, usize) -> !) -> Self {
+        const STACK_ALIGN: usize = 16;
+
         assert!(stack.len() > 8, "Stack too small");
 
         let mut ptr = stack.as_mut_ptr_range().end;
